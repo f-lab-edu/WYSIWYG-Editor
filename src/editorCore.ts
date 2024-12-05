@@ -7,6 +7,9 @@ class Editor {
   constructor() {
     this.editorFrame = document.getElementById("editor");
     this.editorFrame.style.display = "grid";
+    this.editorFrame.style.gridTemplateRows = "1fr 15fr";
+    this.editorFrame.style.width = "100%";
+    this.editorFrame.style.height = "95vh";
   }
   setTextarea() {
     const textarea = document.createElement("textarea");
@@ -15,6 +18,7 @@ class Editor {
     textarea.style.borderTop = "none";
     textarea.style.outline = "none";
     textarea.style.padding = "5px 5px";
+    textarea.style.height = "100%";
 
     this.editorFrame.appendChild(textarea);
   }
@@ -25,7 +29,6 @@ class Editor {
     editorArea.style.border = "1px solid black";
     editorArea.style.display = "grid";
     editorArea.style.gridTemplateColumns = `2fr 1fr 1fr`;
-    editorArea.style.gap = "10px";
 
     const formatButtonsWrapper =
       this.getEditorButtonWrapperElementByNames(formatButtons);
@@ -45,9 +48,6 @@ class Editor {
     const buttonWrapper = document.createElement("article");
     buttonWrapper.style.display = "grid";
     buttonWrapper.style.gridTemplateColumns = `repeat(auto-fit, minmax(5px, 1fr))`;
-    buttonWrapper.style.gap = "10px";
-    buttonWrapper.style.borderLeft = "0.5px solid gray";
-    buttonWrapper.style.borderRight = "0.5px solid gray";
 
     buttonNames.forEach((buttonName) => {
       const button = document.createElement("button");
@@ -55,11 +55,31 @@ class Editor {
 
       icon.src = `/icons/${buttonName}-button.png`;
       icon.style.width = "30px";
+      icon.style.aspectRatio = "1/1";
+      icon.style.margin = "auto";
 
       button.style.background = "none";
       button.style.border = "none";
       button.style.display = "grid";
-      button.style.margin = "auto";
+      button.style.marginRight = "10px";
+      button.style.marginLeft = "10px";
+      button.style.marginTop = "5px";
+      button.style.marginBottom = "5px";
+      button.style.borderRadius = "15%";
+
+      button.addEventListener("mouseover", () => {
+        button.style.background = "#808C99";
+      });
+      button.addEventListener("mouseout", () => {
+        button.style.background = "transparent";
+      });
+      button.addEventListener("click", () => {
+        button.style.background = "#495057";
+
+        setTimeout(() => {
+          button.style.background = "#808C99";
+        }, 150);
+      });
 
       button.appendChild(icon);
       buttonWrapper.appendChild(button);
