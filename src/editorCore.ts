@@ -4,23 +4,36 @@ const listButtons = ["ol", "ul"];
 
 class Editor {
   editorFrame: HTMLElement;
+  isFocusedTextarea = false;
   constructor() {
-    this.editorFrame = document.getElementById("editor");
+    this.editorFrame = document.getElementById("editor") as HTMLElement;
     this.editorFrame.style.display = "grid";
     this.editorFrame.style.gridTemplateRows = "1fr 15fr";
     this.editorFrame.style.width = "100%";
     this.editorFrame.style.height = "95vh";
+
+    this.isFocusedTextarea = false;
   }
   setTextarea() {
-    const textarea = document.createElement("textarea");
+    const textDiv = document.createElement("div");
 
-    textarea.style.border = "1px solid black";
-    textarea.style.borderTop = "none";
-    textarea.style.outline = "none";
-    textarea.style.padding = "5px 5px";
-    textarea.style.height = "100%";
+    textDiv.style.border = "1px solid black";
+    textDiv.style.borderTop = "none";
+    textDiv.style.outline = "none";
+    textDiv.style.padding = "5px 5px";
+    textDiv.style.height = "100%";
 
-    this.editorFrame.appendChild(textarea);
+    this.editorFrame.addEventListener("click", (pointerEvent) => {
+      if (!!pointerEvent && pointerEvent.target === textDiv) {
+        console.log("focused textDiv");
+        this.isFocusedTextarea = true;
+      } else {
+        console.log("out focus textDiv");
+        this.isFocusedTextarea = false;
+      }
+    });
+
+    this.editorFrame.appendChild(textDiv);
   }
 
   setEditorArea() {
