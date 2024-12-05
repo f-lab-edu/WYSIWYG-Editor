@@ -4,7 +4,9 @@ const listButtons = ["ol", "ul"];
 
 class Editor {
   editorFrame: HTMLElement;
-  isFocusedTextarea = false;
+  isFocusedTextarea: boolean;
+  selection: Selection | null;
+
   constructor() {
     this.editorFrame = document.getElementById("editor") as HTMLElement;
     this.editorFrame.style.display = "grid";
@@ -13,27 +15,53 @@ class Editor {
     this.editorFrame.style.height = "95vh";
 
     this.isFocusedTextarea = false;
+    this.selection = window.getSelection();
   }
   setTextarea() {
-    const textDiv = document.createElement("div");
+    const textWrapper = document.createElement("div");
+    const textArea = document.createElement("p");
 
-    textDiv.style.border = "1px solid black";
-    textDiv.style.borderTop = "none";
-    textDiv.style.outline = "none";
-    textDiv.style.padding = "5px 5px";
-    textDiv.style.height = "100%";
+    textWrapper.style.border = "1px solid black";
+    textWrapper.style.borderTop = "none";
+    textWrapper.style.outline = "none";
+    textWrapper.style.padding = "5px 5px";
+    textWrapper.style.height = "100%";
+
+    window.addEventListener("keydown", (keyboardEvent) => {
+      if (!this.isFocusedTextarea) return;
+      console.log(keyboardEvent.metaKey);
+
+      if (keyboardEvent.metaKey) {
+        if (keyboardEvent.key === "a") {
+          keyboardEvent.preventDefault();
+          if (!this.selection) return;
+
+          const range = document.createRange();
+
+          range.selectNodeContents(textWrapper);
+          this.selection.removeAllRanges();
+          this.selection.addRange(range);
+        }
+        return;
+      } else if (keyboardEvent.ctrlKey || keyboardEvent.altKey) return;
+
+      if (keyboardEvent.code === "Space") textWrapper.innerText += "\u00A0";
+      else if (keyboardEvent.code === "Enter") textWrapper.innerHTML += "<br/>";
+      else textWrapper.innerText += keyboardEvent.key;
+    });
 
     this.editorFrame.addEventListener("click", (pointerEvent) => {
-      if (!!pointerEvent && pointerEvent.target === textDiv) {
-        console.log("focused textDiv");
+      if (!!pointerEvent && pointerEvent.target === textWrapper) {
+        console.log("focused textWrapper");
         this.isFocusedTextarea = true;
       } else {
-        console.log("out focus textDiv");
+        console.log("out focus textWrapper");
         this.isFocusedTextarea = false;
       }
     });
 
-    this.editorFrame.appendChild(textDiv);
+    textWrapper.appendChild(textArea);
+    this.editorFrame.appendChild(textWrapper);
   }
 
   setEditorArea() {
