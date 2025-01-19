@@ -1,21 +1,110 @@
-const formatButtons = ["bold", "italic", "underline", "overline"];
-const otherButtons = ["picture", "code"];
-const listButtons = ["ol", "ul"];
+type buttonFormat =
+  | "bold"
+  | "italic"
+  | "underline"
+  | "line-through"
+  | "picture"
+  | "code"
+  | "ol"
+  | "ul";
+
+const BUTTON_FORMAT = {
+  bold: "bold",
+  italic: "italic",
+  underline: "underline",
+  lineThrough: "line-through",
+  picture: "picture",
+  code: "code",
+  ol: "ol",
+  ul: "ul",
+};
+
+const EDITOR_FRAME_STYLE = `
+#editor {
+  display: grid;
+  grid-template-rows: 1fr 15fr;
+  width: 100%;
+  height: 95vh;
+}
+`;
+const EDITOR_STYLE = `
+  #editorArea {
+    border: 1px solid black;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr
+  }
+`;
+const TEXT_WRAPPER_STYLE = `
+#textWrapper {
+  border: 1px solid black;
+  border-top: none;
+  outline: none;
+  padding: 5px 5px;
+  height: 100%;
+}
+`;
+const BUTTON_WRAPPER_STYLE = `
+#buttonWrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(5px, 1fr));
+}
+`;
+// background: #808C99;
+const BUTTON_STYLE = `
+  .button {
+    background: none;
+    border: none;
+    display: grid;
+    margin: 5px 10px;
+    border-radius: 15%;
+    }
+    .button:active {
+      background: #495057;
+    }
+`;
+const WEBCODE_STYLE = `
+  .code {
+    width: calc(100% - 12px);
+    height: auto;
+    border: 1px solid gray;
+    padding: 5px;
+    margin: 3px auto;
+    text-align: left;
+    background: lightgray;
+  }
+`;
+
+const formatButtons: buttonFormat[] = [
+  "bold",
+  "italic",
+  "underline",
+  "line-through",
+];
+const otherButtons: buttonFormat[] = ["picture", "code"];
+const listButtons: buttonFormat[] = ["ol", "ul"];
 
 class Editor {
   editorFrame: HTMLElement;
   isFocusedTextarea: boolean;
   selection: Selection | null;
+  textWrapper: HTMLElement;
 
   constructor() {
     this.editorFrame = document.getElementById("editor") as HTMLElement;
-    this.editorFrame.style.display = "grid";
-    this.editorFrame.style.gridTemplateRows = "1fr 15fr";
-    this.editorFrame.style.width = "100%";
-    this.editorFrame.style.height = "95vh";
+    this.textWrapper = document.getElementById("textWrapper") as HTMLElement;
 
     this.isFocusedTextarea = false;
     this.selection = null;
+
+    const style = document.createElement("style");
+    style.innerHTML =
+      EDITOR_STYLE +
+      EDITOR_FRAME_STYLE +
+      BUTTON_STYLE +
+      BUTTON_WRAPPER_STYLE +
+      TEXT_WRAPPER_STYLE +
+      WEBCODE_STYLE;
+    document.head.append(style);
 
     document.addEventListener("selectionchange", () => {
       const selction = window.getSelection();
@@ -30,33 +119,11 @@ class Editor {
   }
 
   setTextarea() {
-    const textWrapper = document.createElement("div");
-
-    textWrapper.id = "textWrapper";
-
-    textWrapper.style.border = "1px solid black";
-    textWrapper.style.borderTop = "none";
-    textWrapper.style.outline = "none";
-    textWrapper.style.padding = "5px 5px";
-    textWrapper.style.height = "100%";
+    this.textWrapper = document.createElement("div");
+    this.textWrapper.id = "textWrapper";
 
     window.addEventListener("keydown", (keyboardEvent) => {
       if (!this.isFocusedTextarea) return;
-      // console.log(keyboardEvent.metaKey);
-
-      // if (keyboardEvent.metaKey) {
-      //   if (keyboardEvent.key === "a") {
-      //     keyboardEvent.preventDefault();
-      //     if (!this.selection) return;
-
-      //     const range = document.createRange();
-
-      //     range.selectNodeContents(textWrapper);
-      //     this.selection.removeAllRanges();
-      //     this.selection.addRange(range);
-      //   }
-      //   return;
-      // } else if (keyboardEvent.ctrlKey || keyboardEvent.altKey) return;
 
       if (
         keyboardEvent.metaKey ||
@@ -65,26 +132,25 @@ class Editor {
       )
         return;
 
-      if (keyboardEvent.code === "Space") textWrapper.innerText += "\u00A0";
-      else if (keyboardEvent.code === "Enter") textWrapper.innerHTML += "<br/>";
-      else textWrapper.innerHTML += keyboardEvent.key;
+      if (keyboardEvent.code === "Space")
+        this.textWrapper.innerText += "\u00A0";
+      else if (keyboardEvent.code === "Enter")
+        this.textWrapper.innerHTML += "<br/>";
+      else this.textWrapper.innerHTML += keyboardEvent.key;
     });
 
     this.editorFrame.addEventListener("click", (pointerEvent) => {
-      if (!!pointerEvent && pointerEvent.target === textWrapper)
+      if (!!pointerEvent && pointerEvent.target === this.textWrapper)
         this.isFocusedTextarea = true;
       else this.isFocusedTextarea = false;
     });
 
-    this.editorFrame.appendChild(textWrapper);
+    this.editorFrame.appendChild(this.textWrapper);
   }
 
   setEditorArea() {
     const editorArea = document.createElement("div");
-
-    editorArea.style.border = "1px solid black";
-    editorArea.style.display = "grid";
-    editorArea.style.gridTemplateColumns = `2fr 1fr 1fr`;
+    editorArea.id = "editorArea";
 
     const formatButtonsWrapper =
       this.getEditorButtonWrapperElementByNames(formatButtons);
@@ -104,6 +170,8 @@ class Editor {
     const input = document.createElement("input");
     const label = document.createElement("label");
     const icon = document.createElement("img");
+
+    inputWrapper.className = "button";
 
     input.style.display = "none";
     input.type = "file";
@@ -139,27 +207,21 @@ class Editor {
     buttonChild.appendChild(imageElement);
     wrapperChild.appendChild(buttonChild);
   }
-  getEditorButtonWrapperElementByNames(buttonNames: string[]): HTMLElement {
+  getEditorButtonWrapperElementByNames(
+    buttonNames: buttonFormat[]
+  ): HTMLElement {
     const buttonWrapper = document.createElement("article");
-    buttonWrapper.style.display = "grid";
-    buttonWrapper.style.gridTemplateColumns = `repeat(auto-fit, minmax(5px, 1fr))`;
 
-    buttonNames.forEach((buttonName) => {
+    buttonWrapper.id = "buttonWrapper";
+
+    buttonNames.forEach((buttonName: buttonFormat) => {
       const isPictureButton = buttonName === "picture";
       const button = isPictureButton
         ? this.createFileInputTag(buttonName)
         : document.createElement("button");
       const icon = document.createElement("img");
 
-      button.style.background = "none";
-      button.style.border = "none";
-      button.style.display = "grid";
-      button.style.marginRight = "10px";
-      button.style.marginLeft = "10px";
-      button.style.marginTop = "5px";
-      button.style.marginBottom = "5px";
-      button.style.borderRadius = "15%";
-
+      button.className = "button";
       if (!isPictureButton) this.setButtonImageStyle(icon, buttonName);
       else
         button.addEventListener("change", (e: Event) => {
@@ -173,13 +235,12 @@ class Editor {
           reader.readAsDataURL(file);
           reader.onload = () => {
             const imageUrl: string = reader.result as string;
-            const textWrapper = document.getElementById("textWrapper");
             const image = document.createElement("img");
 
             image.src = imageUrl;
 
-            textWrapper!.appendChild(image);
-            textWrapper!.innerHTML += "<br>";
+            this.textWrapper!.appendChild(image);
+            this.textWrapper!.innerHTML += "<br>";
           };
         });
 
@@ -192,7 +253,7 @@ class Editor {
         button.style.background = "transparent";
       });
       button.addEventListener("click", () => {
-        this.handleClickButtonStyle(button);
+        // this.handleClickButtonStyle(button);
 
         if (!this.selection) return;
 
@@ -220,7 +281,7 @@ class Editor {
               );
             // list styling
             else if (listButtons.includes(buttonName)) {
-              const parentClassName = parentElement.className;
+              const parentClassName = parentElement.className as buttonFormat;
 
               updatedTag = listButtons.includes(parentClassName)
                 ? null
@@ -255,13 +316,12 @@ class Editor {
                 }
               }
 
-              const textWrapper = document.getElementById("textWrapper");
               const textList = selectedText.split("\n");
               let innerText = "";
               for (let textItem of textList) {
                 innerText += `${textItem}<br>`;
               }
-              textWrapper!.innerHTML += innerText;
+              this.textWrapper!.innerHTML += innerText;
             }
 
             this.selection.removeAllRanges();
@@ -272,13 +332,13 @@ class Editor {
     return buttonWrapper;
   }
   createTextTag(
-    textStyle: string,
+    textStyle: buttonFormat,
     parentElement: HTMLElement,
     selectedText: string
   ) {
     const spanTag = document.createElement("span");
 
-    spanTag.className = textStyle;
+    spanTag.className = textStyle as string;
     spanTag.textContent = selectedText;
 
     this.updateTextStyle(textStyle, parentElement, spanTag);
@@ -286,40 +346,42 @@ class Editor {
     return spanTag;
   }
   updateTextStyle(
-    textStyle: string,
+    textStyle: buttonFormat,
     parentElement: HTMLElement,
     spanTag: HTMLElement
   ) {
     const isOverlapedTextStyle = parentElement.className === textStyle;
     switch (textStyle) {
-      case "bold":
+      case BUTTON_FORMAT.bold:
         spanTag.style.cssText +=
-          isOverlapedTextStyle && parentElement.style.fontWeight === "bold"
+          isOverlapedTextStyle &&
+          parentElement.style.fontWeight === BUTTON_FORMAT.bold
             ? "font-weight: normal"
-            : "font-weight: bold";
+            : `font-weight: ${BUTTON_FORMAT.bold}`;
         break;
-      case "italic":
+      case BUTTON_FORMAT.italic:
         spanTag.style.cssText +=
-          isOverlapedTextStyle && parentElement.style.fontStyle === "italic"
+          isOverlapedTextStyle &&
+          parentElement.style.fontStyle === BUTTON_FORMAT.italic
             ? "font-style: normal"
-            : "font-style: italic";
+            : `font-style: ${BUTTON_FORMAT.italic}`;
         break;
-      case "underline":
+      case BUTTON_FORMAT.underline:
         spanTag.style.cssText +=
           isOverlapedTextStyle &&
           parentElement.style.textDecoration === "underline"
             ? "text-decoration: none"
-            : "text-decoration: underline";
+            : `text-decoration: ${BUTTON_FORMAT.underline}`;
         break;
-      case "overline":
+      case BUTTON_FORMAT.lineThrough:
         spanTag.style.cssText += isOverlapedTextStyle;
         parentElement.style.textDecoration === "line-through"
           ? "text-decoration: none"
-          : "text-decoration: line-through";
+          : `text-decoration: ${BUTTON_FORMAT.lineThrough}`;
         break;
     }
   }
-  createListTag(listType: "ol" | "ul", selectedText: string) {
+  createListTag(listType: buttonFormat, selectedText: string) {
     const listTag = document.createElement(listType);
     listTag.id = Date.now().toString();
     listTag.className = listType;
@@ -337,15 +399,7 @@ class Editor {
   }
   createCodeTag(selectedText: string) {
     const codeArea = document.createElement("article");
-    codeArea.style.cssText = `
-      width: calc(100% - 12px);
-      height: auto;
-      border: 1px solid gray;
-      padding: 5px;
-      margin: 3px auto;
-      text-align: left;
-      background: lightgray;
-    `;
+    codeArea.style.cssText = WEBCODE_STYLE;
 
     codeArea.innerText = selectedText;
 
@@ -354,14 +408,15 @@ class Editor {
   createPicture(selectedText: string) {
     const pictureTag = document.createElement("picture");
   }
-  handleClickButtonStyle(button: HTMLElement) {
-    button.style.background = "#495057";
+  // handleClickButtonStyle(button: HTMLElement) {
+  //   button.style.background = "#495057";
 
-    setTimeout(() => {
-      button.style.background = "#808C99";
-    }, 150);
-  }
+  //   setTimeout(() => {
+  //     button.style.background = "#808C99";
+  //   }, 150);
+  // }
 }
+
 const editor = new Editor();
 editor.setEditorArea();
 editor.setTextarea();
